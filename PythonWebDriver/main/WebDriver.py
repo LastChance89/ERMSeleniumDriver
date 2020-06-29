@@ -1,6 +1,6 @@
 
 from selenium import webdriver 
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.common.by import By
@@ -23,6 +23,12 @@ class WebDriver(object):
         else:
             self.driver= webdriver.Chrome();  
         
+        self.testUserName = random.choices(string.ascii_uppercase, k = 15)
+        self.testUserPassword = random.choices(string.ascii_uppercase, k = 15)
+        self.testUserHint = random.choices(string.ascii_uppercase, k = 15)
+        
+        #self.driver.implicitly_wait(10)
+        
     def beginTests(self):
         self.errors = []
         logging.info("Beginning test suite")
@@ -32,7 +38,7 @@ class WebDriver(object):
         self.testLogin()
         self.noAdminOptions()
         self.testClientNavigation()
-        self.testAccountHeader()
+        self.testAccountRecordDisplay()
         
         if(len(self.errors) != 0):
             logging.info("The following tests have failed")
@@ -49,7 +55,7 @@ class WebDriver(object):
         try:
             self.driver.get('http://localhost:8080/');
             assert "ERM" in self.driver.title
-        except (NoSuchElementException, AssertionError):
+        except (NoSuchElementException, AssertionError,TimeoutException):
             self.errors.append("testCreateAccount")
             logging.exception("ERROR:")   
             self.endTestandCleanUp()
@@ -57,13 +63,15 @@ class WebDriver(object):
     def testCreateAccount(self):
         logging.info("Beginning Test: Creating Account")
         
-        self.testUserName = random.choices(string.ascii_uppercase, k = 15)
-        self.testUserPassword = random.choices(string.ascii_uppercase, k = 15)
-        self.testUserHint = random.choices(string.ascii_uppercase, k = 15)
         try:
             self.driver.find_element_by_id('createAccountLink').click()
-            self.driver.implicitly_wait(1)
-            assert self.driver.current_url == "http://localhost:8080/#/login/createAccount"
+            
+            WebDriverWait(self.driver,10).until(expected_conditions.presence_of_element_located((By.CLASS_NAME,"create-label-display")))
+            #create-label-display
+            
+            currentURL =  self.driver.current_url 
+            logging.info(currentURL)
+            assert  currentURL == "http://localhost:8080/#/login/createAccount"
             logging.info(self.driver.current_url)
             self.driver.find_element_by_id("userNameInput").send_keys(self.testUserName)
             self.driver.find_element_by_id("passwordInput").send_keys(self.testUserPassword)
@@ -75,7 +83,7 @@ class WebDriver(object):
             
             self.driver.find_element_by_id("SuccessMessage")
             logging.info("Element found")
-        except (NoSuchElementException, AssertionError):
+        except (NoSuchElementException, AssertionError, TimeoutException):
             self.errors.append("testCreateAccount")
             logging.exception("ERROR:")   
             self.endTestandCleanUp()
@@ -88,7 +96,7 @@ class WebDriver(object):
 
     def testLoginHint(self):
         try:
-            self.driver.implicitly_wait(2)
+            WebDriverWait(self.driver,10).until(expected_conditions.presence_of_element_located((By.CLASS_NAME,"user-label-display")))
             self.driver.find_element_by_id("forgetPasswordButton").click()
             WebDriverWait(self.driver,2).until(expected_conditions.presence_of_all_elements_located((By.CSS_SELECTOR,".modal-content")))
             #Pop is web element, not web driver. 
@@ -105,7 +113,7 @@ class WebDriver(object):
             assert paragraph == "Password Hint: " + hintToText
             logging.info("elementFound")
             pop.find_element_by_id("closeMOdalButtonAfterSucsess").click()
-        except (NoSuchElementException, AssertionError):
+        except (NoSuchElementException, AssertionError, TimeoutException):
             self.errors.append("testLoginHint")
             logging.exception("Error testing login hint")
         
@@ -114,15 +122,17 @@ class WebDriver(object):
 
     def testLogin(self):
         try:
-            self.driver.implicitly_wait(2)
+            
             self.driver.find_element_by_id("userNameInput").send_keys(self.testUserName)
             self.driver.find_element_by_id("passwordInput").send_keys(self.testUserPassword)
             self.driver.find_element_by_id("loginUser").click()
-            self.driver.implicitly_wait(3)
-            assert self.driver.current_url == "http://localhost:8080/#/application"
+            WebDriverWait(self.driver,10).until(expected_conditions.presence_of_element_located((By.CLASS_NAME,"login-user-container")))
+            currentURL =  self.driver.current_url 
+            logging.info(currentURL)
+            assert currentURL == "http://localhost:8080/#/application"
             assert self.driver.find_element_by_css_selector(".menu").is_displayed()
             logging.info("Login component testing successful")
-        except (NoSuchElementException, AssertionError):
+        except (NoSuchElementException, AssertionError, TimeoutException):
             self.errors.append("testLogin")
             logging.exception("Error testing using login")
             
@@ -131,7 +141,7 @@ class WebDriver(object):
             adminIsHidden = len(self.driver.find_elements(By.ID, "fileLoadLink")) == 0
             assert adminIsHidden == True
             logging.info("Admin Links not found for normal user")
-        except (NoSuchElementException, AssertionError):
+        except (NoSuchElementException, AssertionError, TimeoutException):
             self.errors.append("noAdminOptions")
             logging.exception("Error testing noAdminOptions")
             self.endTestandCleanUp()
@@ -140,28 +150,37 @@ class WebDriver(object):
         try:
             WebDriverWait(self.driver,1).until(expected_conditions.presence_of_element_located((By.ID,"clientLink")))
             self.driver.find_element_by_id("clientLink").click()
-            self.driver.implicitly_wait(1)
-            assert self.driver.current_url == "http://localhost:8080/#/client"
+            currentURL =  self.driver.current_url 
+            logging.info(currentURL)
+            assert currentURL == "http://localhost:8080/#/client"
             WebDriverWait(self.driver,1).until(expected_conditions.presence_of_element_located((By.CLASS_NAME,"grid-container")))
             linkExists = len(self.driver.find_elements(By.LINK_TEXT, "1114")) == 1
             assert linkExists == True
             self.driver.find_element_by_link_text("1114").click()
-            self.driver.implicitly_wait(1)
-        except (NoSuchElementException, AssertionError):
+        except (NoSuchElementException, AssertionError, TimeoutException):
             self.errors.append("testClientNavigation")
             logging.exception("Error testing testClientNavigation")
       
-    def testAccountHeader(self):
+    def testAccountRecordDisplay(self):
         try:
-            WebDriverWait(self.driver,2).until(expected_conditions.presence_of_element_located((By.CLASS_NAME,"record-display-container")))
-            assert self.driver.current_url == "http://localhost:8080/#/records/1114"
+            #First we check the client information that is displayed. We wait until its populated before checking.
+            WebDriverWait(self.driver,10).until(expected_conditions.text_to_be_present_in_element
+                                                ((By.XPATH,"//div[@class='record-display-container']/div/table/tr[1]/th[2]"),"1114"))
+            currentURL =  self.driver.current_url 
+            logging.info(currentURL)
+            assert currentURL == "http://localhost:8080/#/records/1114"
             assert self.driver.find_element_by_xpath("//div[@class='record-display-container']/div/table/tr[1]/th[2]").text == "1114"
             assert self.driver.find_element_by_xpath("//div[@class='record-display-container']/div/table/tr[1]/th[4]").text == "222 way Drive, Somewhere1 MD"
             assert self.driver.find_element_by_xpath("//div[@class='record-display-container']/div/table/tr[2]/th[4]").text == "Service 1"
             assert self.driver.find_element_by_xpath("//div[@class='record-display-container']/div/table/tr[2]/th[2]").text == "Guy 214"
+            
+            #Next, to just check we have data on the grid, we check the first row. 
+            assert self.driver.find_element_by_xpath("//div[@class='ag-row ag-row-no-focus ag-row-even ag-row-level-0 ag-row-position-absolute ag-row-first']/div[1]").text =="06/07/17"     
+            assert self.driver.find_element_by_xpath("//div[@class='ag-row ag-row-no-focus ag-row-even ag-row-level-0 ag-row-position-absolute ag-row-first']/div[2]").text =="$4.13" 
+            assert self.driver.find_element_by_xpath("//div[@class='ag-row ag-row-no-focus ag-row-even ag-row-level-0 ag-row-position-absolute ag-row-first']/div[3]").text =="12.59 kWh" 
         except (NoSuchElementException, AssertionError):
-            self.errors.append("testAccountHeader")
-            logging.exception("Error testing testAccountHeader")
+            self.errors.append("testAccountRecordDisplay")
+            logging.exception("Error testing testAccountRecordDisplay")
         
     def endTestandCleanUp(self):
         self.driver.close()
