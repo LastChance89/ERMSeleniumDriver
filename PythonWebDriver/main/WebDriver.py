@@ -57,6 +57,7 @@ class WebDriver(object):
         try:
             self.driver.get('http://localhost:8080/');
             assert "ERM" in self.driver.title
+            time.sleep(1)
         except (NoSuchElementException, AssertionError,TimeoutException):
             self.errors.append("testCreateAccount")
             logging.exception("Error connecting to site")   
