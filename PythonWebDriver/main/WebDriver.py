@@ -10,12 +10,19 @@ import string
 import logging
 import time
 from datetime import date
-
+import configparser
 
 class WebDriver(object):
 
     def __init__(self, driverSelction):
         super().__init__()
+        config = configparser.ConfigParser()
+
+        config.read("configuration.ini")
+
+        self.url = config['selenium_web_configuration']['url'] + ":" + config['selenium_web_configuration']['port']
+       
+        #print("HERE IS MY URL " + self.url)
         
         log_name ="output_" + date.today().strftime("%d_%m_%Y")
         #Setup Logging 
@@ -25,6 +32,8 @@ class WebDriver(object):
         self.driver = webdriver.Chrome(ChromeDriverManager().install())
 
         '''
+        @TODO: Implement this with real webdriver manager later. Chome only supported browser for now
+        Will need to make adjustments cause I know there are some CSS issues with firefox.
         if(driverSelction == 'firefox'):
             self.driver = webdriver.Firefox();
         else:
@@ -61,7 +70,7 @@ class WebDriver(object):
     def main_site_page(self):
         logging.info("Beginning Test: Navigating to main page")
         try:
-            self.driver.get('http://localhost:8080/');
+            self.driver.get(self.url);
             assert "ERM" in self.driver.title
             time.sleep(1)
         except (NoSuchElementException, AssertionError,TimeoutException):
@@ -76,11 +85,12 @@ class WebDriver(object):
             self.driver.find_element_by_id('createAccountLink').click()
             
             WebDriverWait(self.driver,10).until(expected_conditions.presence_of_element_located((By.CLASS_NAME,"create-label-display")))
-            
             time.sleep(1)
             currentURL =  self.driver.current_url 
-            assert  currentURL == "http://localhost:8080/#/login/createAccount"
-
+            
+            assert  currentURL == self.url + "/#/login/createAccount"
+         
+            time.sleep(1)
             self.driver.find_element_by_id("userNameInput").send_keys(self.testUserName)
             self.driver.find_element_by_id("passwordInput").send_keys(self.testUserPassword)
             self.driver.find_element_by_id("hintInput").send_keys(self.testUserHint)
@@ -94,7 +104,8 @@ class WebDriver(object):
         except (NoSuchElementException, AssertionError, TimeoutException):
             self.errors.append("test_create_account")
             logging.exception("Error testing test_create_account")   
-       
+        
+        time.sleep(1)
         self.driver.find_element_by_id("okButton").click();
         logging.info("Testing for creating account complete")
 
@@ -130,7 +141,7 @@ class WebDriver(object):
             self.driver.find_element_by_id("passwordInput").send_keys(self.testUserPassword)
             self.driver.find_element_by_id("loginUser").click()
             WebDriverWait(self.driver,10).until(expected_conditions.presence_of_element_located((By.CLASS_NAME,"login-user-container")))
-            assert self.driver.current_url  == "http://localhost:8080/#/application"
+            assert self.driver.current_url  == self.url + "/#/application"
             userToText = ''.join(self.testUserName)
             assert self.driver.find_element_by_id("loggedInUser").text ==  userToText
             
@@ -157,7 +168,7 @@ class WebDriver(object):
             time.sleep(1)
             currentURL =  self.driver.current_url 
             logging.info(currentURL)
-            assert currentURL == "http://localhost:8080/#/client"
+            assert currentURL == self.url +"/#/client"
             WebDriverWait(self.driver,10).until(expected_conditions.presence_of_element_located((By.CLASS_NAME,"grid-container")))
             linkExists = len(self.driver.find_elements(By.LINK_TEXT, "1114")) == 1
             assert linkExists == True
@@ -175,7 +186,6 @@ class WebDriver(object):
             time.sleep(1)
             currentURL =  self.driver.current_url 
             logging.info(currentURL)
-            assert currentURL == "http://localhost:8080/#/records/1114"
             time.sleep(1)
             assert self.driver.find_element_by_xpath("//div[@class='record-display-container']/div/table/tr[1]/th[2]").text == "1114"
             assert self.driver.find_element_by_xpath("//div[@class='record-display-container']/div/table/tr[1]/th[4]").text == "222 way Drive, Somewhere1 MD"
@@ -195,7 +205,7 @@ class WebDriver(object):
             self.driver.find_element_by_xpath("//div[@class='login-user-container']/div[2]/a").click()
             WebDriverWait(self.driver,10).until(expected_conditions.presence_of_element_located((By.CLASS_NAME,"user-label-display")))
             currentURL =  self.driver.current_url 
-            assert  currentURL == "http://localhost:8080/#/login" 
+            assert  currentURL == self.url +"/#/login" 
         except (NoSuchElementException, AssertionError, TimeoutException):
             self.errors.append("test_log_out")
             logging.exception("Error testing test_log_out")
