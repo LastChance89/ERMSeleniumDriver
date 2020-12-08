@@ -8,7 +8,7 @@ import sys
 import configparser
 
 
-def setupConfigFile(path, url, port):
+def setup_config_file(path, url, port):
     print("Beginning configuration of ini file")
     config = configparser.ConfigParser()
     config.read(path)
@@ -18,5 +18,5 @@ def setupConfigFile(path, url, port):
         config.write(configFile)
     print ("Configuration complete")
 if __name__ == '__main__':
-    setupConfigFile(sys.argv[1],sys.argv[2], sys.argv[3])
+    setup_config_file(sys.argv[1],sys.argv[2], sys.argv[3])
     
