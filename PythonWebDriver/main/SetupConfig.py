@@ -16,6 +16,7 @@ def setupConfigFile(path, url, port):
     config['selenium_web_configuration']['port'] = port
     with open(path, 'w') as configFile:
         config.write(configFile)
+    print ("Configuration complete")
 if __name__ == '__main__':
     setupConfigFile(sys.argv[1],sys.argv[2], sys.argv[3])
     
