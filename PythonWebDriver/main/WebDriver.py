@@ -29,8 +29,13 @@ class WebDriver(object):
         logging.basicConfig(filename = log_name, level="INFO", filemode = 'w', format='%(asctime)s - %(levelname)s - %(message)s' )
         
         'This is so we dont have to bother about installing the proper version of chrome installer'
-        self.driver = webdriver.Chrome(ChromeDriverManager().install())
+        options= webdriver.ChromeOptions()
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--headless")
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(),chrome_options=options)
 
+        
         '''
         @TODO: Implement this with real webdriver manager later. Chome only supported browser for now
         Will need to make adjustments cause I know there are some CSS issues with firefox.
