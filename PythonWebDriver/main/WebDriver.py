@@ -20,7 +20,7 @@ class WebDriver(object):
 
         config.read("configuration.ini")
 
-        self.url = config['selenium_web_configuration']['url'] + ":" + config['selenium_web_configuration']['port']
+        self.url ="http://"+ config['selenium_web_configuration']['url'] + ":" + config['selenium_web_configuration']['port']
        
         #print("HERE IS MY URL " + self.url)
         
